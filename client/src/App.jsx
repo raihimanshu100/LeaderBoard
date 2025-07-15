@@ -5,39 +5,47 @@ import UserSelector from './components/UserSelector';
 import AddUserForm from './components/AddUserForm';
 import Leaderboard from './components/Leaderboard';
 
-function App() {
+export default function App() {
   const [users, setUsers] = useState([]);
   const [ranking, setRanking] = useState([]);
 
   useEffect(() => {
-    loadUsers();
-    loadRanking();
+    fetchUsers();
+    fetchLeaderboard();
 
-    socket.on('update-leaderboard', data => {
-      setRanking(data);
-    });
+    const handleUserAdded = (newUser) => {
+      setUsers((prev) => [...prev, newUser]);
+    };
+    const handleLeaderboardUpdate = (updated) => {
+      console.log("📊 Live leaderboard update received:", updated);
+      setRanking([...updated]); 
+    };
 
-    return () => socket.off('update-leaderboard');
+    socket.on('user-added', handleUserAdded);
+    socket.on('update-leaderboard', handleLeaderboardUpdate);
+
+    return () => {
+      socket.off('user-added', handleUserAdded);
+      socket.off('update-leaderboard', handleLeaderboardUpdate);
+    };
   }, []);
 
-  const loadUsers = async () => {
+  const fetchUsers = async () => {
     const res = await API.get('/users');
     setUsers(res.data);
   };
 
-  const loadRanking = async () => {
+  const fetchLeaderboard = async () => {
     const res = await API.get('/leaderboard');
     setRanking(res.data);
   };
 
   return (
     <div className="container">
-      <h2>Real-Time Leaderboard</h2>
-      <UserSelector users={users} refreshLeaderboard={loadRanking} />
-      <AddUserForm onUserCreated={loadUsers} />
+      <h1>🏆 Leaderboard Tracker</h1>
+      <UserSelector users={users} refreshLeaderboard={fetchLeaderboard} />
+      <AddUserForm onUserCreated={fetchUsers} />
       <Leaderboard users={ranking} />
     </div>
   );
 }
-
-export default App;

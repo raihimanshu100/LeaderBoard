@@ -8,9 +8,19 @@ exports.getAllUsers = async (req, res) => {
 
 exports.createUser = async (req, res) => {
   const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Name required' });
+
   const newUser = await User.create({ name });
+
+  global.io.emit('user-added', newUser);
+
+  const updatedLeaderboard = await User.find().sort({ totalPoints: -1 });
+  global.io.emit('update-leaderboard', updatedLeaderboard);
+
   res.status(201).json(newUser);
 };
+
+
 
 exports.assignPoints = async (req, res) => {
   const { userId } = req.params;
