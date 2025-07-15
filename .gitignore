@@ -1,7 +1,4 @@
 client/node_modules/
 server/node_modules/
 
-*.log
-dist/
-build/
-.env
+
